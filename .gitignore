@@ -1,0 +1,17 @@
+# Misc
+__pycache__
+.idea
+
+# Dataset
+datasets/Unet.h5
+
+# Output etc
+new.png
+out.png
+out2.png
+result.png
+server/result.png
+
+# Uploaded
+server/uploads/*
+!server/uploads/exist.txt

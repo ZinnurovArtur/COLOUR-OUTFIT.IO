@@ -85,7 +85,8 @@ class ColorID:
     file1 = tf.image.resize_with_pad(file1,target_height = 512, target_width = 512)
     rgb = file1.numpy()
     file1 = np.expand_dims(file1,axis=0)/255.
-    seq = load_model("datasets/Unet.h5").predict(file1)
+    seq = load_model("C:\\Users\\Arthur\\PycharmProjects\\machine-learning\\Colour-Match\\datasets\\Unet.h5").predict(
+        file1)
     seq = seq[3][0,:,:,0]
     seq = np.expand_dims(seq,axis=-1)
     c1x = rgb*seq
@@ -125,8 +126,7 @@ class ColorID:
     color = np.uint8([[[b,g,r]]])
     hsv=cv2.cvtColor(color,cv2.COLOR_BGR2HSV)
     hue = hsv[0][0][0]
-    print(hsv[:,:,1].mean())
-    print(hsv[0][0][0],hsv[0][0][1],hsv[0][0][2])
+
     low = [hue-sat,hsv[0][0][1]-sat,hsv[0][0][2]-sat]
     up = [hue+sat,255,255]
     return low,up
@@ -141,7 +141,7 @@ class ColorID:
           colr_lo = np.array(low)
           colr_hi = np.array(up)
           mask = cv2.inRange(hsv, colr_lo, colr_hi)
-          print(target_color[i][2])
+
           im[mask > 0] = (target_color[i][2], target_color[i][1],
                           target_color[i][0])
           cv2.imwrite("result.png", im)
@@ -179,33 +179,34 @@ class ColorID:
     for j in range(5 - len(arr)):
       if (len(arr) < 5):
         arr.append("N")
-    print(arr)
+
 
     resultCol = self.query(arr).json().get("result")
     return resultCol
 
 
-
-path_img = "datasets/bauman-yeallow.jpg"
-funcPhoto = ColorID(path_img)
-
-
-image = funcPhoto.get_cloth(path_img,False)
-cv2.imwrite("out.png",image)
-funcPhoto.removeAlpha("out.png")
-arr_ofcolors = funcPhoto.get_colors(funcPhoto.get_image(("new.png")),8,True)
-cv2.imwrite("out.png",image)
-print(arr_ofcolors[1])
+def run(path_img,sat):
+    funcPhoto = ColorID(path_img)
 
 
-col = 2
-input_color = arr_ofcolors[1:col+1]
-print(input_color)
-target_color = funcPhoto.validate_colors(col,input_color)
-random.shuffle(target_color)
-funcPhoto.changeColor("new.png",input_color,target_color,40)
-
-funcPhoto.remove_bk("result.png")
-funcPhoto.combine(path_img,"result.png")
+    image = funcPhoto.get_cloth(path_img,False)
+    cv2.imwrite("out.png",image)
+    funcPhoto.removeAlpha("out.png")
+    arr_ofcolors = funcPhoto.get_colors(funcPhoto.get_image(("new.png")),8,True)
+    cv2.imwrite("out.png",image)
 
 
+
+    col = 2
+    input_color = arr_ofcolors[1:col+1]
+    print(input_color)
+    target_color = funcPhoto.validate_colors(col,input_color)
+
+    random.shuffle(target_color)
+    funcPhoto.changeColor("new.png",input_color,target_color,sat)
+
+    funcPhoto.remove_bk("result.png")
+    funcPhoto.combine(path_img,"result.png")
+
+if __name__ == '__main__':
+    run("datasets/bauman-yeallow.jpg",40)
