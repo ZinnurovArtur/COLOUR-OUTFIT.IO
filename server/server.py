@@ -10,7 +10,7 @@ api = Flask(__name__)
 def index():
     return render_template('index.html')
 
-
+# generate  the page with data
 @api.route('/outfit-upload', methods=['POST'])
 def outfit_upload():
     data = request.form
@@ -19,9 +19,11 @@ def outfit_upload():
     filename = os.path.join('uploads', str(uuid.uuid1()) + '.' + image_file.filename.split('.')[-1])
     image_file.save(filename)
 
+    # get the input of saturation bar
     print("Saturation is: " + request.form['saturation'])
     run(filename, int(request.form['saturation']))
 
+    # output the rendered image
     returned_image = filename
     returned_image = "out2.png"
 

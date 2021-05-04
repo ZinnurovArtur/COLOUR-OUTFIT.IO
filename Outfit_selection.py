@@ -21,192 +21,186 @@ import requests
 import random
 
 import os
+
+
 # %matplotlib inline
-
-
-
-
-
-
 
 
 class ColorID:
 
-  def __init__(self,path):
-    self.path = path
+    def __init__(self, path):
+        self.path = path
 
-    # Rgb to hext conversion
-  def rgbTohex(self,color):
-    return "#{:02x}{:02x}{:02x}".format(int(color[0]),int(color[1]), int(color[2]))
+        # Rgb to hext conversion
 
-  def get_image(self,image_path):
-    image = cv2.imread(image_path)
-    image = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
-    return image
+    def rgbTohex(self, color):
+        return "#{:02x}{:02x}{:02x}".format(int(color[0]), int(color[1]), int(color[2]))
 
-  def query(self,color):
+        # return the image data
 
-    data = {'model': "default", 'input': [color[0], color[1], color[2], color[3], color[4]]}
-    data = json.dumps(data)
+    def get_image(self, image_path):
+        image = cv2.imread(image_path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        return image
 
-    response = requests.post('http://colormind.io/api/', data=data)
-    return response
+        # get the new pallet of colours as the query
 
-  def get_colors(self,image, numCol, chart):
-      clf = KMeans(n_clusters=numCol)
-      new_image = cv2.resize(image, (600, 400), interpolation=cv2.INTER_AREA)
-      new_image = new_image.reshape(new_image.shape[0] * new_image.shape[1], 3)
+    def query(self, color):
 
-      labels = clf.fit_predict(new_image)
-      counts = Counter(labels)
-      counts = dict(sorted(counts.items()))
+        data = {'model': "default", 'input': [color[0], color[1], color[2], color[3], color[4]]}
+        data = json.dumps(data)
 
-      center_colors = clf.cluster_centers_
-      ordered_colors = [center_colors[i] for i in counts.keys()]
-      hex_colors = [self.rgbTohex(ordered_colors[i]) for i in counts.keys()]
-      rgb_colors = [ordered_colors[i] for i in counts.keys()]
+        response = requests.post('http://colormind.io/api/', data=data)
+        return response
 
-      sorted_values = sorted(counts.items(), key=lambda x: x[1], reverse=True)
-      sorted_keys = [sorted_values[i][0] for i in range(len(sorted_values))]
+        # obtain the colours from the image
 
-      sorted_rgb = [center_colors[i] for i in sorted_keys]
-      print(sorted_rgb)
+    def get_colors(self, image, numCol, chart):
+        clf = KMeans(n_clusters=numCol)
+        new_image = cv2.resize(image, (600, 400), interpolation=cv2.INTER_AREA)
+        new_image = new_image.reshape(new_image.shape[0] * new_image.shape[1], 3)
 
-      if (chart):
-          plt.figure(figsize=(5, 5))
-          plt.pie(counts.values(), labels=hex_colors, colors=hex_colors)
+        labels = clf.fit_predict(new_image)
+        counts = Counter(labels)
+        counts = dict(sorted(counts.items()))
 
-      return sorted_rgb
+        center_colors = clf.cluster_centers_
+        ordered_colors = [center_colors[i] for i in counts.keys()]
+        hex_colors = [self.rgbTohex(ordered_colors[i]) for i in counts.keys()]
+        rgb_colors = [ordered_colors[i] for i in counts.keys()]
+
+        sorted_values = sorted(counts.items(), key=lambda x: x[1], reverse=True)
+        sorted_keys = [sorted_values[i][0] for i in range(len(sorted_values))]
+
+        sorted_rgb = [center_colors[i] for i in sorted_keys]
+        print(sorted_rgb)
+
+        if (chart):
+            plt.figure(figsize=(5, 5))
+            plt.pie(counts.values(), labels=hex_colors, colors=hex_colors)
+
+        return sorted_rgb
+
+    # Image segmentation
+    def get_cloth(self, filename, stacked=False):
+        file1 = cv2.imread(filename)
+        file1 = tf.image.resize_with_pad(file1, target_height=512, target_width=512)
+        rgb = file1.numpy()
+        file1 = np.expand_dims(file1, axis=0) / 255.
+        seq = load_model(
+            "C:\\Users\\Arthur\\PycharmProjects\\machine-learning\\Colour-Match\\datasets\\Unet.h5").predict(
+            file1)
+        seq = seq[3][0, :, :, 0]
+        seq = np.expand_dims(seq, axis=-1)
+        c1x = rgb * seq
+        c2x = rgb * (1 - seq)
+        cfx = c1x + c2x
+        dummcol = np.ones((rgb.shape[0], rgb.shape[1], 1))
+        rgbx = np.concatenate((rgb, dummcol * 255), axis=-1)
+        rgbs = np.concatenate((cfx, seq * 255), axis=-1)
+        if stacked:
+            stacked = np.hstack((rgbx, rgbs))
+            return stacked
+        else:
+            return rgbs
+
+        # remove alpha channel from segmented image
+
+    def removeAlpha(self, im):
+        image = cv2.imread(im, cv2.IMREAD_UNCHANGED)
+        trans_mask = image[:, :, 3] <= 162  # the ml background
+        image[trans_mask] = [255, 255, 255, 255]
+        new_img = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
+        return cv2.imwrite("new.png", new_img)
+
+        # combine new image of original image and recoloured image
+
+    def combine(self, inImg, outImg):
+        img1 = Image.open(inImg)
+        img1.thumbnail((512, 512), Image.ANTIALIAS)
+        img2 = Image.open(outImg)
+        img2.thumbnail((512, 512), Image.ANTIALIAS)
+        back = img1.copy()
+        back.paste(img2, (-50, 0), img2)
+        back.save("out2.png", quility=95)
+
+    # generate the colour range of the outfit
+    def converterHUE(self, b, g, r, sat):
+        color = np.uint8([[[b, g, r]]])
+        hsv = cv2.cvtColor(color, cv2.COLOR_BGR2HSV)
+        hue = hsv[0][0][0]
+
+        low = [hue - sat, hsv[0][0][1] - sat, hsv[0][0][2] - sat]
+        up = [hue + sat, 255, 255]
+        return low, up
+
+        # actual recolouring function
+
+    def changeColor(self, image, input_color, target_color, sat):
+        im = cv2.imread(image)
+        hsv = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
+
+        for i in range(len(input_color)):
+            low, up = self.converterHUE(input_color[i][2], input_color[i][1], input_color[i][0], sat)
+            colr_lo = np.array(low)
+            colr_hi = np.array(up)
+            mask = cv2.inRange(hsv, colr_lo, colr_hi)
+
+            im[mask > 0] = (target_color[i][2], target_color[i][1],
+                            target_color[i][0])
+            cv2.imwrite("result.png", im)
+
+    # remove background from the photo
+    def remove_bk(self, image):
+        img = Image.open(image)
+        img = img.convert("RGBA")
+        datas = img.getdata()
+
+        arr = []
+        for item in datas:
+            if item[0] == 255 and item[1] == 255 and item[2] == 255:
+                arr.append((255, 255, 255, 0))
+            else:
+                arr.append(item)
+                # print(item)
+        img.putdata(arr)
+        img.save("result.png", "PNG")
+
+        # generate colours only for the certain number of colours
+
+    def validate_colors(self, number_ofcol, arrayOfinput):
+        arr = []
+        for i in range(number_ofcol):
+            arr.append(arrayOfinput[i].tolist())
+
+        for j in range(5 - len(arr)):
+            if (len(arr) < 5):
+                arr.append("N")
+
+        resultCol = self.query(arr).json().get("result")
+        return resultCol
 
 
-  #Image segmentation
-  def get_cloth(self,filename,stacked=False):
-    file1 = cv2.imread(filename)
-    file1 = tf.image.resize_with_pad(file1,target_height = 512, target_width = 512)
-    rgb = file1.numpy()
-    file1 = np.expand_dims(file1,axis=0)/255.
-    seq = load_model("C:\\Users\\Arthur\\PycharmProjects\\machine-learning\\Colour-Match\\datasets\\Unet.h5").predict(
-        file1)
-    seq = seq[3][0,:,:,0]
-    seq = np.expand_dims(seq,axis=-1)
-    c1x = rgb*seq
-    c2x =rgb*(1-seq)
-    cfx = c1x+c2x
-    dummcol = np.ones((rgb.shape[0],rgb.shape[1],1))
-    rgbx = np.concatenate((rgb,dummcol*255),axis=-1)
-    rgbs = np.concatenate((cfx,seq*255),axis =-1)
-    if stacked:
-      stacked = np.hstack((rgbx,rgbs))
-      return stacked
-    else:
-      return rgbs
-
-  def removeAlpha(self,im):
-    image = cv2.imread(im,cv2.IMREAD_UNCHANGED)
-    trans_mask = image[:,:,3] <= 162 # the ml background
-    image[trans_mask] = [255,255,255,255]
-    new_img = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
-    return cv2.imwrite("new.png",new_img)
-
-  def combine(self,inImg,outImg):
-      img1 = Image.open(inImg)
-      img1.thumbnail((512, 512), Image.ANTIALIAS)
-      img2 = Image.open(outImg)
-      img2.thumbnail((512, 512), Image.ANTIALIAS)
-      back = img1.copy()
-      back.paste(img2, (-50, 0), img2)
-      back.save("out2.png", quility=95)
-
-
-
-
-
-
-  def converterHUE(self,b,g,r,sat):
-    color = np.uint8([[[b,g,r]]])
-    hsv=cv2.cvtColor(color,cv2.COLOR_BGR2HSV)
-    hue = hsv[0][0][0]
-
-    low = [hue-sat,hsv[0][0][1]-sat,hsv[0][0][2]-sat]
-    up = [hue+sat,255,255]
-    return low,up
-
-
-  def changeColor(self,image,input_color,target_color,sat):
-      im = cv2.imread(image)
-      hsv = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
-
-      for i in range(len(input_color)):
-          low, up = self.converterHUE(input_color[i][2], input_color[i][1], input_color[i][0], sat)
-          colr_lo = np.array(low)
-          colr_hi = np.array(up)
-          mask = cv2.inRange(hsv, colr_lo, colr_hi)
-
-          im[mask > 0] = (target_color[i][2], target_color[i][1],
-                          target_color[i][0])
-          cv2.imwrite("result.png", im)
-
-
-
-
-  def adding_toanother(self,first,second):
-    img1 = cv2.imread(first)
-    img1 = cv2.resize(img1,(512,512))
-    img2 = cv2.imread(second)
-    added_image = cv2.addWeighted(img1,0.6,img2,0.6,0)
-    cv2.imwrite("result2.png",added_image)
-
-  def remove_bk(self,image):
-    img = Image.open(image)
-    img = img.convert("RGBA")
-    datas = img.getdata()
-
-    arr = []
-    for item in datas:
-      if item[0] == 255 and item[1] == 255 and item[2] == 255:
-        arr.append((255,255,255,0))
-      else:
-          arr.append(item)
-          #print(item)
-    img.putdata(arr)
-    img.save("result.png","PNG")
-
-  def validate_colors(self,number_ofcol, arrayOfinput):
-    arr = []
-    for i in range(number_ofcol):
-      arr.append(arrayOfinput[i].tolist())
-
-    for j in range(5 - len(arr)):
-      if (len(arr) < 5):
-        arr.append("N")
-
-
-    resultCol = self.query(arr).json().get("result")
-    return resultCol
-
-
-def run(path_img,sat):
+def run(path_img, sat):
     funcPhoto = ColorID(path_img)
 
-
-    image = funcPhoto.get_cloth(path_img,False)
-    cv2.imwrite("out.png",image)
+    image = funcPhoto.get_cloth(path_img, False)
+    cv2.imwrite("out.png", image)
     funcPhoto.removeAlpha("out.png")
-    arr_ofcolors = funcPhoto.get_colors(funcPhoto.get_image(("new.png")),8,True)
-    cv2.imwrite("out.png",image)
-
-
+    arr_ofcolors = funcPhoto.get_colors(funcPhoto.get_image(("new.png")), 8, True)
+    cv2.imwrite("out.png", image)
 
     col = 2
-    input_color = arr_ofcolors[1:col+1]
+    input_color = arr_ofcolors[1:col + 1]
     print(input_color)
-    target_color = funcPhoto.validate_colors(col,input_color)
+    target_color = funcPhoto.validate_colors(col, input_color)
 
     random.shuffle(target_color)
-    funcPhoto.changeColor("new.png",input_color,target_color,sat)
+    funcPhoto.changeColor("new.png", input_color, target_color, sat)
 
     funcPhoto.remove_bk("result.png")
-    funcPhoto.combine(path_img,"result.png")
+    funcPhoto.combine(path_img, "result.png")
+
 
 if __name__ == '__main__':
-    run("datasets/bauman-yeallow.jpg",40)
+    run("datasets/bauman-yeallow.jpg", 40)
