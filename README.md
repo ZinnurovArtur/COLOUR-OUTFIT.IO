@@ -23,13 +23,12 @@ python server.py
 
 ## Built With
 
-* [Tensorflow] 
-* [Google drive] 
-* [OpenCV] 
+* [Tensorflow](https://www.tensorflow.org) - machine learning library 
+* [Google drive](https://www.google.com/drive) - storing all data 
+* [OpenCV](https://opencv.org) - Computer vision and machine learning library 
 
 ## Authors
 Arthur Zinnurov
 
 ## License
-
 MIT
