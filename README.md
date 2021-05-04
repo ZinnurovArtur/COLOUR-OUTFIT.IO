@@ -4,7 +4,9 @@
 
 ## Machine learning implementation of matching colours on outfit
 
-Web-application which allows to try new matched colours on the new outfit 
+Web-application which allows to try new matched colours on the new outfit. 
+For each photo, specific outfit could be exctracted in order to obtain new colours to generate. 
+
 
 ## Running
 python server.py 
@@ -16,6 +18,8 @@ python server.py
 
 
 ## Structure
+## Main idea 
+![Alt Text](example.png)
 ### Web page:
 
 ![Alt Text](webpage.gif)
