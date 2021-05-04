@@ -20,6 +20,8 @@ python server.py
 
 ![Alt Text](webpage.gif)
 
+### Accuracy:
+![Alt Text](accuracy.png)
 
 ## Built With
 
