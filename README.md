@@ -20,7 +20,7 @@ python server.py
 ## Structure
 ### Web page:
 
-![Alt Text](Login.gif)
+![Alt Text](webpage.gif)
 
 
 ## Built With
