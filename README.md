@@ -19,12 +19,14 @@ python server.py
 
 ## Structure
 ## Main idea 
+
 ![Alt Text](example.png)
-### Web page:
+
+### Web page
 
 ![Alt Text](webpage.gif)
 
-### Accuracy:
+### Accuracy
 ![Alt Text](accuracy.png)
 
 ## Built With
