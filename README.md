@@ -1,7 +1,5 @@
 <h1 align="center">
-  <br>
-  COLOUR-OUTFIT.IO
-  <br>
+  <br>COLOUR-OUTFIT.IO<br>
 </h1>
 
 ## Machine learning implementation of matching colours on outfit
