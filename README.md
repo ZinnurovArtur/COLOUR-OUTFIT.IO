@@ -17,7 +17,6 @@ python server.py
 * Accuracy 91%
 
 
-## Structure
 ## Main idea 
 
 ![Alt Text](example.png)
