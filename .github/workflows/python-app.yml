@@ -30,9 +30,10 @@ jobs:
       with:
         python-root: '.'
         flake8-flags: ''
-        mypy-flags: '--ignore-missing-imports --warn-return-any' 
         fail-on-isort: false
-        skip-flake8: true
+        skip-flake8: false
+    - name: GitHub Action for pylint
+      uses: cclauss/GitHub-Action-for-pylint@0.7.0
 
     - name: commit isort changes
       run: |
