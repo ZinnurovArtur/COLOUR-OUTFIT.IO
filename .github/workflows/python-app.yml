@@ -25,16 +25,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8 pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: linting
-      uses: alexanderdamiani/pylinter@v1.1.1
-      with:
-        python-root: '.'
-        flake8-flags: ''
-        fail-on-isort: false
-        skip-flake8: false
+        
     - name: GitHub Action for pylint
       uses: cclauss/GitHub-Action-for-pylint@0.7.0
-
+      
+    
     - name: commit isort changes
       run: |
         git config --local user.email "action@github.com"
@@ -46,7 +41,3 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         branch: ${{ github.ref }}
 
-    - name: Test with pytest
-      run: |
-        # calling via python will also add the current directory to sys.path
-        python -m pytest
