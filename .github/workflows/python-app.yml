@@ -20,33 +20,32 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.9
-    - name: Python Code Quality and Lint
-      uses: ricardochaves/python-lint@v1.3.0
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pytest
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: linting
+      uses: alexanderdamiani/pylinter@v1.1.1
       with:
-        # A list of all paths to test
-        python-root-list: '.'
-        # Use Pylint
-        use-pylint:  true
-        # Use pycodestyle
-        use-pycodestyle:  true
-        # Use Flake8
-        use-flake8:  true
-        # Use Black
-        use-black: true
-        # Use mypy
-        use-mypy:  true
-        # Use isort
-        use-isort:  true
-        # Extra options: pylint $(extra-pylint-options) $(python-root-list)
-        extra-pylint-options: ''
-        # Extra options: pycodestyle $(extra-pycodestyle-options) $(python-root-list)
-        extra-pycodestyle-options: ''
-      # Extra options: flake8 $(extra-flake8-options) $(python-root-list)
-        extra-flake8-options: ''
-      # Extra options: black --check $(extra-black-options) $(python-root-list)
-        extra-black-options: ''
-      # Extra options: mypy $(extra-mypy-options) $(python-root-list)
-        extra-mypy-options: ''
-      # Extra options: isort -rc $(extra-isort-options) $(python-root-list) -c --diff 
-        extra-isort-options: ''
- 
+        python-root: '.'
+        flake8-flags: ''
+        mypy-flags: '--ignore-missing-imports'
+        fail-on-isort: false
+        skip-flake8: true
+
+    - name: commit isort changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add -A && git diff-index --cached --quiet HEAD || git commit -m 'isort'
+    - name: push isort changes
+      uses: ad-m/github-push-action@v0.5.0
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ github.ref }}
+
+    - name: Test with pytest
+      run: |
+        # calling via python will also add the current directory to sys.path
+        python -m pytest
