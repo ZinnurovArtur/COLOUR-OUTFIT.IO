@@ -23,32 +23,9 @@ jobs:
     - name: Lint with pylint
       run: |
         pip install pylint
-        pylint .
-        ...
+        pylint pylint **/*.py"
 
-    - name: Lint with black
-      run: |
-        pip install black
-        black .
-        ...
-
-    - name: Lint with isort
-      run: |
-        pip install isort
-        isort .
-        ...
-
-    - name: Lint with pycodestyle
-      run: |
-        pip install pycodestyle
-        pycodestyle .
-        ...
-
-    - name: Lint with mypy
-      run: |
-        pip install mypy
-        mypy .
-        ...
+   
           
     - name: commit isort changes
       run: |
