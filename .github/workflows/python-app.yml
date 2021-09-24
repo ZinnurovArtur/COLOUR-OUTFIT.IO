@@ -30,7 +30,7 @@ jobs:
       with:
         python-root: '.'
         flake8-flags: ''
-        mypy-flags: '--ignore-missing-imports --check-untyped-defs' 
+        mypy-flags: '--no-warn-no-return' 
         fail-on-isort: false
         skip-flake8: true
 
