@@ -30,7 +30,7 @@ jobs:
       with:
         python-root: '.'
         flake8-flags: ''
-        mypy-flags: '--no-warn-no-return' 
+        mypy-flags: '--ignore-missing-imports --warn-return-any' 
         fail-on-isort: false
         skip-flake8: true
 
