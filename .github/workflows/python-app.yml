@@ -36,7 +36,7 @@ jobs:
           # Use Black
           use-black:  true
           # Use mypy
-          use-mypy:  true
+          use-mypy:  false
           # Use isort
           use-isort: true
           # Extra options: pylint $(extra-pylint-options) $(python-root-list)
